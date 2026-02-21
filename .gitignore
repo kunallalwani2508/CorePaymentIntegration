@@ -1,0 +1,20 @@
+# Maven build output
+target/
+*.class
+
+# IDE files
+.idea/
+*.iml
+.vscode/
+*.swp
+
+# Spring Boot logs
+*.log
+logs/
+
+# Environment / secrets — NEVER commit these!
+application-local.properties
+
+# OS files
+.DS_Store
+Thumbs.db
