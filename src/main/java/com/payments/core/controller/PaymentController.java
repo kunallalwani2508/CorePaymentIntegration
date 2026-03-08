@@ -1,13 +1,14 @@
 package com.payments.core.controller;
 
 import com.payments.core.dto.PaymentDTOs;
+import com.payments.core.model.Payment;
 import com.payments.core.service.PaymentService;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
+import java.util.List;
 /**
  * ============================================================
  * CONTROLLER LAYER — The API Entry Point (Front Door)
@@ -168,6 +169,11 @@ public class PaymentController {
         PaymentDTOs.PaymentStatusResponse response = paymentService.getPaymentStatus(transactionId);
 
         return ResponseEntity.ok(response);  // 200 OK
+    }
+    @GetMapping("/all")
+    public ResponseEntity<List<Payment>> getAllPayments() {
+        List<Payment> payments = paymentService.getAllPayments();
+        return ResponseEntity.ok(payments);
     }
 
 

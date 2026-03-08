@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -160,6 +161,8 @@ public class PaymentService {
         // We return a DTO, NOT the entity.
         // This hides internal DB details from the API caller.
         // -------------------------------------------------------
+
+
         return PaymentDTOs.PaymentInitiateResponse.builder()
                 .transactionId(savedPayment.getTransactionId())
                 .paymentUrl(savedPayment.getPaymentUrl())
@@ -167,6 +170,16 @@ public class PaymentService {
                 .message("Payment initiated. Redirect user to paymentUrl to complete payment.")
                 .build();
     }
+    // ============================================================
+    // 4. GET ALL PAYMENTS
+    // ============================================================
+    @Transactional(readOnly = true)
+    public List<Payment> getAllPayments() {   // ✅ outside, at class level
+        log.info("Fetching all payments");
+        return paymentRepository.findAll();
+    }
+
+ // ← class closing brace
 
 
     // ============================================================
