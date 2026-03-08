@@ -1,136 +1,111 @@
 # 💳 Core Payment Integration System
 
-A **beginner-friendly** backend payment processing system built with **Java + Spring Boot**.
-Designed as a portfolio/learning project for entry-level Java developers.
+A secure, scalable payment processing backend built with **Java & Spring Boot**.
+Designed with real-world FinTech practices — idempotent transactions, callback handling, and a clean layered architecture.
 
 ---
 
-## 🎯 What This Project Does
+## 🚀 Tech Stack
 
-This system simulates a real-world payment backend — the kind used by companies like Razorpay, PayU, or CCAvenue under the hood.
+| Layer | Technology |
+|---|---|
+| Language | Java 17 |
+| Framework | Spring Boot 3.2 |
+| Server | Apache Tomcat (embedded) |
+| Database | MySQL / H2 (dev) |
+| ORM | Spring Data JPA + Hibernate |
+| Build Tool | Maven |
+| Utilities | Lombok |
 
-**The flow:**
+---
+
+## 📁 Project Structure
+
 ```
-Merchant App ──POST──▶ /api/payments/initiate ──▶ Returns checkout URL
-                                                          │
-User visits checkout URL, completes payment               │
-                                                          ▼
-Payment Gateway ──POST──▶ /api/payments/callback ──▶ Updates status in DB
-                                                          │
-Merchant checks ──GET──▶ /api/payments/status/{id} ──▶ Returns SUCCESS/FAILED
+src/
+└── main/
+    └── java/com/payments/core/
+        ├── controller/        # REST API endpoints
+        ├── service/           # Business logic
+        ├── repository/        # Database operations
+        ├── model/             # JPA entities
+        ├── dto/               # Request/Response objects
+        ├── exception/         # Global error handling
+        └── util/              # Signature & helper utils
 ```
 
 ---
 
-## 🏗️ Project Structure (Layered Architecture)
-
-```
-src/main/java/com/payments/core/
-│
-├── CorePaymentApplication.java     ← App entry point (main method)
-│
-├── controller/
-│   └── PaymentController.java      ← Handles HTTP requests/responses
-│
-├── service/
-│   └── PaymentService.java         ← Business logic (the brain)
-│
-├── repository/
-│   └── PaymentRepository.java      ← Database operations (JPA)
-│
-├── model/
-│   └── Payment.java                ← Database entity (maps to MySQL table)
-│
-├── dto/
-│   └── PaymentDTOs.java            ← Request/Response data transfer objects
-│
-├── exception/
-│   ├── PaymentExceptions.java      ← Custom exception classes
-│   └── GlobalExceptionHandler.java ← Centralized error handling
-│
-└── util/
-    └── SignatureUtil.java          ← Callback signature verification
-```
-
-### Why Layered Architecture?
-| Layer | Role | Talks To |
-|-------|------|----------|
-| Controller | Receive HTTP, return JSON | Service |
-| Service | Business logic, validation | Repository, Utils |
-| Repository | Read/write database | MySQL |
-| Model | Java ↔ DB mapping | — |
-| DTO | Data shape for API | — |
-
----
-
-## 🚀 Getting Started
+## ⚙️ Setup & Run Locally
 
 ### Prerequisites
 - Java 17+
-- Maven 3.6+
-- MySQL 8+
-- An IDE (IntelliJ IDEA Community Edition — free and recommended)
+- Maven 3.8+
+- MySQL 8+ (or use H2 for quick start)
 
-### Step 1: Clone the project
+### 1. Clone the repository
 ```bash
 git clone https://github.com/YOUR_USERNAME/core-payment-system.git
 cd core-payment-system
 ```
 
-### Step 2: Set up MySQL database
+### 2. Configure the database
+
+**Option A — MySQL**
+
+Create the database:
 ```sql
--- Run this in MySQL Workbench or terminal
 CREATE DATABASE payment_db;
 ```
 
-### Step 3: Configure your database credentials
-Open `src/main/resources/application.properties` and update:
+Update `src/main/resources/application.properties`:
 ```properties
 spring.datasource.url=jdbc:mysql://localhost:3306/payment_db
-spring.datasource.username=root
-spring.datasource.password=YOUR_MYSQL_PASSWORD
+spring.datasource.username=your_username
+spring.datasource.password=your_password
+spring.jpa.hibernate.ddl-auto=update
 ```
 
-### Step 4: Run the application
+**Option B — H2 (no setup needed)**
+
+The project runs out of the box with H2 in-memory database for local development.
+
+### 3. Run the application
 ```bash
-# Using Maven
 mvn spring-boot:run
-
-# Or compile and run the JAR
-mvn clean package
-java -jar target/core-payment-system-1.0.0.jar
 ```
 
-The app starts at: **http://localhost:8080**
-
-### Step 5: Run tests
-```bash
-mvn test
-```
-> Tests use H2 (in-memory database) — no MySQL needed!
+App starts at: `http://localhost:8080`
 
 ---
 
-## 📡 API Reference
+## 📌 API Reference
 
-### 1. Initiate Payment
-```http
-POST /api/payments/initiate
-Content-Type: application/json
+### 💰 Payments `/api/payments`
 
-{
-  "merchantId": "MERCHANT_001",
-  "orderId": "ORDER_12345",
-  "amount": 499.99,
-  "currency": "INR",
-  "callbackUrl": "https://myshop.com/payment/callback"
-}
-```
-**Response (201 Created):**
+| Method | Endpoint | Description |
+|---|---|---|
+| POST | `/api/payments/initiate` | Initiate a new payment |
+| POST | `/api/payments/callback` | Handle gateway callback |
+| GET | `/api/payments/status/{transactionId}` | Get payment status |
+| GET | `/api/payments/all` | Get all payments |
+
+**Initiate Payment — Request Body:**
 ```json
 {
-  "transactionId": "TXN-A1B2C3D4E5F6...",
-  "paymentUrl": "http://mock-gateway.com/checkout?txn=TXN-...",
+  "merchantId": "M001",
+  "orderId": "ORD001",
+  "amount": 500.00,
+  "currency": "INR",
+  "callbackUrl": "http://localhost:8080/api/payments/callback"
+}
+```
+
+**Initiate Payment — Response:**
+```json
+{
+  "transactionId": "TXN-ABC123",
+  "paymentUrl": "http://mock-gateway.com/checkout?txn=TXN-ABC123",
   "status": "PENDING",
   "message": "Payment initiated. Redirect user to paymentUrl to complete payment."
 }
@@ -138,161 +113,158 @@ Content-Type: application/json
 
 ---
 
-### 2. Payment Callback (called by gateway)
-```http
-POST /api/payments/callback
-Content-Type: application/json
+### 👤 Customers `/api/customers`
 
-{
-  "transactionId": "TXN-A1B2C3D4E5F6...",
-  "status": "SUCCESS",
-  "signature": "a3f4b2c1..."
-}
-```
-**Response (200 OK):**
-```
-Callback processed successfully. Status updated to: SUCCESS
-```
+| Method | Endpoint | Description |
+|---|---|---|
+| POST | `/api/customers` | Create a customer |
+| GET | `/api/customers` | Get all customers |
+| GET | `/api/customers/{id}` | Get customer by ID |
+| PUT | `/api/customers/{id}` | Update customer |
+| DELETE | `/api/customers/{id}` | Delete customer |
 
----
-
-### 3. Check Payment Status
-```http
-GET /api/payments/status/TXN-A1B2C3D4E5F6...
-```
-**Response (200 OK):**
+**Create Customer — Request Body:**
 ```json
 {
-  "transactionId": "TXN-A1B2C3D4E5F6...",
-  "paymentStatus": "SUCCESS",
-  "amount": 499.99,
-  "currency": "INR",
-  "merchantId": "MERCHANT_001",
-  "orderId": "ORDER_12345",
-  "lastUpdatedTime": "2024-01-15T10:30:00"
+  "name": "Rahul Sharma",
+  "email": "rahul@example.com",
+  "phone": "9876543210",
+  "address": "Mumbai, India"
 }
 ```
 
 ---
 
-### 4. Health Check
-```http
-GET /api/payments/health
+### 🏪 Merchants `/api/merchants`
+
+| Method | Endpoint | Description |
+|---|---|---|
+| POST | `/api/merchants` | Register a merchant |
+| GET | `/api/merchants` | Get all merchants |
+| GET | `/api/merchants/{id}` | Get merchant by ID |
+| PUT | `/api/merchants/{id}` | Update merchant |
+| PATCH | `/api/merchants/{id}/activate` | Activate merchant |
+| PATCH | `/api/merchants/{id}/deactivate` | Deactivate merchant |
+
+**Register Merchant — Request Body:**
+```json
+{
+  "name": "TechMart Pvt Ltd",
+  "email": "techmart@example.com",
+  "phone": "9876543210",
+  "businessType": "E-Commerce",
+  "gstin": "27AAPFU0939F1ZV"
+}
+```
+
+> API Key is **auto-generated** on registration.
+
+---
+
+### 💳 Payment Methods `/api/payment-methods`
+
+| Method | Endpoint | Description |
+|---|---|---|
+| POST | `/api/payment-methods` | Add a payment method |
+| GET | `/api/payment-methods/customer/{customerId}` | Get methods by customer |
+| GET | `/api/payment-methods/{id}` | Get by ID |
+| PATCH | `/api/payment-methods/{id}/set-default` | Set as default |
+| DELETE | `/api/payment-methods/{id}` | Remove method |
+
+**Supported Types:** `UPI`, `CARD`, `NET_BANKING`, `WALLET`
+
+**Add Payment Method — Request Body:**
+```json
+{
+  "customerId": 1,
+  "methodType": "UPI",
+  "provider": "GooglePay",
+  "maskedAccount": "rahul@okicici",
+  "accountHolderName": "Rahul Sharma",
+  "isDefault": true
+}
 ```
 
 ---
 
-## 🛡️ Key Concepts Implemented
+## 🔑 Key Design Concepts
 
-### Idempotency (Duplicate Prevention)
-If a merchant sends the same `merchantId + orderId` twice, the system returns `409 Conflict` instead of creating a duplicate payment. This is critical in payment systems to prevent double-charging.
+### Idempotency
+Duplicate payment requests for the same `merchantId + orderId` are automatically rejected, preventing double charges.
 
 ### Callback Signature Verification
-When the payment gateway sends a callback, we verify its `signature` using SHA-256 hashing with a shared secret key. If the signature doesn't match → request rejected immediately. This prevents hackers from faking a `SUCCESS` status.
+Every gateway callback is verified using HMAC signature validation before updating any transaction status.
 
-### Global Exception Handling
-All exceptions are caught by `GlobalExceptionHandler` and converted to consistent JSON error responses — no raw stack traces exposed to API callers.
+### Soft Delete
+Merchants and Payment Methods use soft delete (status → `INACTIVE`) instead of hard delete, preserving data integrity across payment history.
 
-### @Transactional
-Critical operations are wrapped in database transactions. If anything fails mid-way, the entire operation rolls back — preventing partial/corrupted data.
-
----
-
-## ❌ Error Responses
-
-All errors follow a consistent format:
-```json
-{
-  "statusCode": 404,
-  "errorCode": "PAYMENT_NOT_FOUND",
-  "message": "Payment not found for transaction ID: TXN-XYZ",
-  "timestamp": "2024-01-15T10:30:00"
-}
+### Layered Architecture
 ```
-
-| Scenario | HTTP Status | Error Code |
-|----------|-------------|------------|
-| Transaction not found | 404 | `PAYMENT_NOT_FOUND` |
-| Duplicate payment | 409 | `DUPLICATE_PAYMENT` |
-| Invalid signature | 400 | `INVALID_SIGNATURE` |
-| Invalid status | 422 | `INVALID_STATUS_TRANSITION` |
-| Validation failure | 400 | `VALIDATION_FAILED` |
-| Server error | 500 | `INTERNAL_SERVER_ERROR` |
-
----
-
-## 🧪 Testing with Postman
-
-Import and test manually:
-
-1. **Health check:** `GET http://localhost:8080/api/payments/health`
-2. **Initiate payment:** Use the request body from the API Reference above
-3. **Copy the `transactionId`** from the response
-4. **Generate a signature** (for testing, the signature = SHA-256 of `transactionId|SUCCESS|mock-secret-key`)
-5. **Send callback** with the transactionId, status, and signature
-6. **Check status:** `GET http://localhost:8080/api/payments/status/{transactionId}`
-
----
-
-## 🗄️ Database Table
-
-Auto-created by Hibernate (`spring.jpa.hibernate.ddl-auto=update`):
-
-```sql
-CREATE TABLE payments (
-    id              BIGINT AUTO_INCREMENT PRIMARY KEY,
-    transaction_id  VARCHAR(255) NOT NULL UNIQUE,
-    merchant_id     VARCHAR(255) NOT NULL,
-    order_id        VARCHAR(255) NOT NULL,
-    amount          DECIMAL(10,2) NOT NULL,
-    currency        VARCHAR(3) NOT NULL,
-    status          VARCHAR(20) NOT NULL DEFAULT 'PENDING',
-    callback_url    VARCHAR(255),
-    payment_url     VARCHAR(500),
-    gateway_signature VARCHAR(255),
-    created_at      DATETIME,
-    updated_at      DATETIME
-);
+Controller  →  Service  →  Repository  →  Database
+(HTTP)        (Logic)      (JPA)          (MySQL)
 ```
 
 ---
 
-## 🔮 Future Enhancements (Ideas for your next version)
+## 🗄️ Database Schema
 
-- [ ] Integrate with **Razorpay sandbox API** (free to sign up)
-- [ ] Add **Spring Security** for API key authentication
-- [ ] Add **Swagger/OpenAPI** UI for interactive API docs
-- [ ] Implement **Kafka** for async event-driven callbacks
-- [ ] Add **retry mechanism** for failed callbacks
-- [ ] Build a **React/Angular dashboard** for merchants
+### payments
+| Column | Type | Description |
+|---|---|---|
+| id | BIGINT | Primary key |
+| transaction_id | VARCHAR | Unique transaction ID |
+| merchant_id | VARCHAR | Merchant reference |
+| order_id | VARCHAR | Order reference |
+| amount | DECIMAL | Payment amount |
+| currency | VARCHAR | Currency code |
+| status | ENUM | PENDING / SUCCESS / FAILED |
+| created_at | TIMESTAMP | Creation time |
+| updated_at | TIMESTAMP | Last update time |
+
+### customers
+| Column | Type | Description |
+|---|---|---|
+| id | BIGINT | Primary key |
+| name | VARCHAR | Customer name |
+| email | VARCHAR | Unique email |
+| phone | VARCHAR | Phone number |
+| address | VARCHAR | Address |
+
+### merchants
+| Column | Type | Description |
+|---|---|---|
+| id | BIGINT | Primary key |
+| name | VARCHAR | Business name |
+| email | VARCHAR | Unique email |
+| api_key | VARCHAR | Auto-generated API key |
+| business_type | VARCHAR | Type of business |
+| gstin | VARCHAR | GST number |
+| status | ENUM | ACTIVE / INACTIVE |
+
+### payment_methods
+| Column | Type | Description |
+|---|---|---|
+| id | BIGINT | Primary key |
+| customer_id | BIGINT | FK → customers |
+| method_type | ENUM | UPI / CARD / NET_BANKING / WALLET |
+| provider | VARCHAR | GooglePay, HDFC etc. |
+| masked_account | VARCHAR | Masked sensitive details |
+| is_default | BOOLEAN | Default method flag |
+| status | ENUM | ACTIVE / INACTIVE |
 
 ---
 
-## 📚 Spring Boot Concepts You'll Learn
+## 🔮 Future Enhancements
 
-| Concept | Where in Code |
-|---------|--------------|
-| `@RestController` | PaymentController.java |
-| `@Service` | PaymentService.java |
-| `@Repository` + JPA | PaymentRepository.java |
-| `@Entity` + `@Table` | Payment.java |
-| `@Transactional` | PaymentService.java |
-| `@ControllerAdvice` | GlobalExceptionHandler.java |
-| `@Valid` + Validation | PaymentController + DTOs |
-| Custom Exceptions | PaymentExceptions.java |
-| Mockito Unit Testing | PaymentServiceTest.java |
-| Builder Pattern (Lombok) | All DTO/Entity classes |
+- [ ] Swagger UI for interactive API docs
+- [ ] Order management module
+- [ ] Refund & settlement module
+- [ ] Event-driven architecture with Kafka
+- [ ] Integration with real PSPs (Razorpay, Stripe, PayU)
+- [ ] Merchant dashboard
 
 ---
 
-## 👤 Author
+## 👨‍💻 Author
 
-**[Your Name]**
-- GitHub: [@your-username](https://github.com/your-username)
-- LinkedIn: [Your LinkedIn](https://linkedin.com/in/your-profile)
-
----
-
-## 📄 License
-
-MIT License — free to use for learning and portfolio purposes.
+Built as a personal FinTech project to demonstrate Spring Boot, REST API design, and real-world payment processing concepts.
